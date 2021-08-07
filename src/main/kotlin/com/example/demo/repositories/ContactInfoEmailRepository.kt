@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface ContactInfoEmailRepository : JpaRepository<ContactInfoEmail, Long> {
-    fun findContactInfoEmailById(id: Long): ContactInfoEmail
+    fun findContactInfoEmailById(id: Long): ContactInfoEmail?
     fun existsByEmail(email: String): Boolean
     fun deleteContactInfoEmailById(id: Long):Long
     fun deleteByEmail(email: String): Long

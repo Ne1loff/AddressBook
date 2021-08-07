@@ -7,12 +7,13 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ContactRepository : JpaRepository<Contact, Long> {
 
-    fun findContactById(id: Long): Contact
+    fun findContactById(id: Long): Contact?
 
-    fun findContactByName(name: String): Contact
+    fun findContactsByName(name: String): List<Contact>
 
-    fun findContactByRegion(region: String): Contact
+    fun findContactsByRegion(region: String): List<Contact>
+
+    fun findContactsByLocality(locality: String): List<Contact>
 
     fun deleteContactById(id: Long) : Long
-
 }

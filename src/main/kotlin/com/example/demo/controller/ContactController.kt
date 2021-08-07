@@ -5,72 +5,96 @@ import com.example.demo.dto.ContactInfoDTO
 import com.example.demo.entities.Contact
 import com.example.demo.entities.ContactInfoEmail
 import com.example.demo.entities.ContactInfoNumber
-import com.example.demo.services.ContactServiceImpl
+import com.example.demo.services.ContactService
+import org.springframework.core.io.Resource
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.BufferedImageHttpMessageConverter
 import org.springframework.web.bind.annotation.*
+import java.io.File
 
 
 @RestController
 @RequestMapping(value = ["/api/contacts/"])
 class ContactController(
-    private val contactServiceImpl: ContactServiceImpl
+    private val contactService: ContactService
 ) {
 
     @GetMapping
     fun getAllContacts(): List<Contact> {
-        return contactServiceImpl.findAll()
+        return contactService.findAll()
     }
 
     @GetMapping("{id}")
     fun getContact(@PathVariable id: Long): Contact? {
-        return contactServiceImpl.findById(id)
+        return contactService.findById(id)
     }
 
     @GetMapping("{id}/info")
     fun getAllContactInfos(@PathVariable id: Long): ContactInfoDTO {
-        return contactServiceImpl.getAllContactInfo(id)
+        return contactService.getAllContactInfo(id)
     }
 
     @GetMapping("{id}/info/emails")
     fun getContactInfosEmails(@PathVariable id: Long): List<ContactInfoEmail> {
-        return contactServiceImpl.getContactInfoEmails(id)
+        return contactService.getContactInfoEmails(id)
     }
 
     @GetMapping("{id}/info/numbers")
     fun getContactInfosNumbers(@PathVariable id: Long): List<ContactInfoNumber> {
-        return contactServiceImpl.getContactInfoNumbers(id)
+        return contactService.getContactInfoNumbers(id)
     }
 
     @PostMapping
     fun createContact(@RequestBody contact: Contact): HttpStatus {
-        contactServiceImpl.createContact(contact)
+        contactService.createContact(contact)
         return HttpStatus.CREATED
     }
 
     @PostMapping("{id}/info")
     fun addContactInfo(@PathVariable id: Long, @RequestBody contactInfo: ContactInfoDTO): HttpStatus {
-        contactServiceImpl.addContactInfo(id, contactInfo)
+        contactService.addContactInfo(id, contactInfo)
         return HttpStatus.OK
     }
 
     @PutMapping("{id}/edit")
     fun editContact(@PathVariable id: Long, @RequestBody updatedContact: ContactDTO): HttpStatus {
-        contactServiceImpl.updateContact(id, updatedContact)
+        contactService.updateContact(id, updatedContact)
         return HttpStatus.OK
+    }
+
+    @GetMapping("{id}/photo")
+    fun getContactPhoto(@PathVariable id: Long): ResponseEntity<File> {
+        val file = contactService.loadContactPhoto(id)
+        return ResponseEntity.ok().header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"" + file.name + "\"").body(file);
+    }
+
+    @PostMapping("{id}/photo/")
+    fun uploadContactPhotoFromUrl(@PathVariable id: Long, @RequestParam("url") url: String): HttpStatus {
+        contactService.uploadPhoto(id, url)
+        return HttpStatus.OK
+    }
+
+    @DeleteMapping("{id}/photo/delete")
+    fun deleteContactPhoto(@PathVariable id: Long): HttpStatus {
+        return if (contactService.deletePhoto(id)) HttpStatus.OK else HttpStatus.CONFLICT
     }
 
     @DeleteMapping("{id}/delete")
     fun deleteContact(@PathVariable id: Long): HttpStatus {
-        return if (contactServiceImpl.deleteContact(id)) HttpStatus.OK else HttpStatus.NO_CONTENT
+        return if (contactService.deleteContact(id)) HttpStatus.OK else HttpStatus.NO_CONTENT
     }
 
     @DeleteMapping("{id}/info/emails/{emailId}/delete")
     fun deleteContactInfoEmails(@PathVariable id: Long, @PathVariable emailId: Long): HttpStatus {
-        return if (contactServiceImpl.deleteContactInfoEmail(id, emailId)) HttpStatus.OK else HttpStatus.NO_CONTENT
+        return if (contactService.deleteContactInfoEmail(id, emailId)) HttpStatus.OK else HttpStatus.NO_CONTENT
     }
 
     @DeleteMapping("{id}/info/numbers/{numberId}/delete")
     fun deleteContactInfoNumbers(@PathVariable id: Long, @PathVariable numberId: Long): HttpStatus {
-        return if (contactServiceImpl.deleteContactInfoNumbers(id, numberId)) HttpStatus.OK else HttpStatus.NO_CONTENT
+        return if (contactService.deleteContactInfoNumbers(id, numberId)) HttpStatus.OK else HttpStatus.NO_CONTENT
     }
 }

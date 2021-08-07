@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface ContactInfoNumbersRepository : JpaRepository<ContactInfoNumber, Long> {
-    fun findContactInfoNumberById(id:Long): ContactInfoNumber
+    fun findContactInfoNumberById(id:Long): ContactInfoNumber?
     fun existsByNumber(number: String): Boolean
     fun deleteContactInfoNumberById(id: Long): Long
     fun deleteByNumber(number: String): Long
