@@ -21,8 +21,8 @@ class ApiExceptionHandler {
         return ResponseEntity(apiException, httpStatus)
     }
 
-    @ExceptionHandler(value = [(ApiInvalidDataAccessException::class)])
-    fun handleApiConflictException(e: ApiInvalidDataAccessException): ResponseEntity<Any> {
+    @ExceptionHandler(value = [(ApiBadRequestException::class)])
+    fun handleApiConflictException(e: ApiBadRequestException): ResponseEntity<Any> {
         val httpStatus = HttpStatus.BAD_REQUEST
         val apiException = ApiException(
             message = e.message,

@@ -5,12 +5,11 @@ import com.example.demo.dto.ContactInfoDTO
 import com.example.demo.entities.Contact
 import com.example.demo.entities.ContactInfoEmail
 import com.example.demo.entities.ContactInfoNumber
+import com.example.demo.exception.ApiBadRequestException
 import com.example.demo.services.ContactService
-import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.http.converter.BufferedImageHttpMessageConverter
 import org.springframework.web.bind.annotation.*
 import java.io.File
 
@@ -64,17 +63,28 @@ class ContactController(
         return HttpStatus.OK
     }
 
+    @GetMapping("/report")
+    fun getReport(
+        @RequestParam("region", defaultValue = "true") region: Boolean,
+        @RequestParam("locality", defaultValue = "true") locality: Boolean,
+        @RequestParam("alphabetically", defaultValue = "true") alphabetically: Boolean
+    ) : Any {
+        return contactService.getReport(region, locality, alphabetically)
+    }
+
+
     @GetMapping("{id}/photo")
     fun getContactPhoto(@PathVariable id: Long): ResponseEntity<File> {
         val file = contactService.loadContactPhoto(id)
         return ResponseEntity.ok().header(
             HttpHeaders.CONTENT_DISPOSITION,
-            "attachment; filename=\"" + file.name + "\"").body(file);
+            "attachment; filename=\"" + file.name + "\""
+        ).body(file)
     }
 
     @PostMapping("{id}/photo/")
-    fun uploadContactPhotoFromUrl(@PathVariable id: Long, @RequestParam("url") url: String): HttpStatus {
-        contactService.uploadPhoto(id, url)
+    fun uploadContactPhotoFromUrl(@PathVariable id: Long, @RequestParam("url") url: String?): HttpStatus {
+        contactService.uploadPhoto(id, url ?: throw ApiBadRequestException("Url is null"))
         return HttpStatus.OK
     }
 

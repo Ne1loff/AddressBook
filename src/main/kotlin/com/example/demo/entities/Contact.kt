@@ -21,13 +21,14 @@ data class Contact(
     var region: String,
 
     @Column(name = "locality")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     var locality: String?,
 
     @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true)
-    val emails: MutableList<ContactInfoEmail> = ArrayList(),
+    var emails: MutableList<ContactInfoEmail> = ArrayList(),
 
     @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true)
-    val numbers: MutableList<ContactInfoNumber> = ArrayList(),
+    var numbers: MutableList<ContactInfoNumber> = ArrayList(),
 
     @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "id", unique = true)
@@ -35,5 +36,6 @@ data class Contact(
     var photo: ContactPhoto?,
 
     @Column(name = "description")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     var description: String?
 )
