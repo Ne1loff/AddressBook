@@ -67,14 +67,18 @@ class ContactController(
     }
 
     @GetMapping("/report")
-    fun getReport(
+    fun getReport(): MutableMap<String, MutableList<Any>> {
+        return contactService.getReportUpdated()
+    }
+
+    @GetMapping("/report/old")
+    fun getOldReport(
         @RequestParam("region", defaultValue = "true") region: Boolean,
         @RequestParam("locality", defaultValue = "true") locality: Boolean,
         @RequestParam("alphabetically", defaultValue = "true") alphabetically: Boolean
     ): Any {
         return contactService.getReportUpdated()
     }
-
 
     @GetMapping("{id}/photo")
     fun getContactPhoto(@PathVariable id: Long): ResponseEntity<InputStreamResource> {
