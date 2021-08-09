@@ -77,7 +77,7 @@ class ContactController(
         @RequestParam("locality", defaultValue = "true") locality: Boolean,
         @RequestParam("alphabetically", defaultValue = "true") alphabetically: Boolean
     ): Any {
-        return contactService.getReportUpdated()
+        return contactService.getReport(region, locality, alphabetically)
     }
 
     @GetMapping("{id}/photo")
