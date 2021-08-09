@@ -33,8 +33,14 @@ class ContactService(
     private val entityManager: EntityManager,
     @Value("\${app.photoPath}") private val photoPath: String
 ) {
-    fun findAll(): List<Contact> {
-        return contactRepository.findAll()
+    fun findAll(sort: String): List<Contact> {
+
+        val sortTypes = listOf("id", "name", "region", "locality")
+        if (!sortTypes.contains(sort)) throw ApiBadRequestException("Invalid sorting type")
+
+        val hql = "from Contact order by $sort"
+
+        return entityManager.createQuery(hql).resultList.filterIsInstance<Contact>()
     }
 
     fun findById(id: Long): Contact {

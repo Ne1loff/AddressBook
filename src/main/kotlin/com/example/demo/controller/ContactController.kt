@@ -24,8 +24,8 @@ class ContactController(
 ) {
 
     @GetMapping
-    fun getAllContacts(): List<Contact> {
-        return contactService.findAll()
+    fun getAllContacts(@RequestParam("sortBy", defaultValue = "id") sortBy: String): List<Contact> {
+        return contactService.findAll(sortBy)
     }
 
     @GetMapping("{id}")
