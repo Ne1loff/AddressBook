@@ -30,9 +30,10 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("com.vladmihalcea:hibernate-types-52:2.12.1")
 	implementation("commons-io:commons-io:2.11.0")
+    implementation("org.junit.jupiter:junit-jupiter:5.7.0")
 
 
-	runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("org.postgresql:postgresql")
 
 	compileOnly("org.projectlombok:lombok")
 

@@ -31,4 +31,15 @@ class ApiExceptionHandler {
         )
         return ResponseEntity(apiException, httpStatus)
     }
+
+    @ExceptionHandler(value = [(ApiInternalServerErrorException::class)])
+    fun handleInternalServerErrorException(e: ApiInternalServerErrorException): ResponseEntity<Any> {
+        val httpStatus = HttpStatus.INTERNAL_SERVER_ERROR
+        val apiException = ApiException(
+            message = e.message,
+            httpStatus = httpStatus,
+            ZonedDateTime.now(ZoneId.of("Z"))
+        )
+        return ResponseEntity(apiException, httpStatus)
+    }
 }

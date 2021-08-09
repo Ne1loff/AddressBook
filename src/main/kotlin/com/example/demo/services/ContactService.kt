@@ -7,6 +7,7 @@ import com.example.demo.entities.ContactInfoEmail
 import com.example.demo.entities.ContactInfoNumber
 import com.example.demo.entities.ContactPhoto
 import com.example.demo.exception.ApiBadRequestException
+import com.example.demo.exception.ApiInternalServerErrorException
 import com.example.demo.exception.ApiNotFoundException
 import com.example.demo.repositories.ContactInfoEmailRepository
 import com.example.demo.repositories.ContactInfoNumbersRepository
@@ -14,6 +15,7 @@ import com.example.demo.repositories.ContactPhotoRepository
 import com.example.demo.repositories.ContactRepository
 import org.apache.commons.io.FilenameUtils
 import org.hibernate.Session
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.File
 import java.net.URL
@@ -28,7 +30,8 @@ class ContactService(
     private val contactInfoEmailRepository: ContactInfoEmailRepository,
     private val contactInfoNumbersRepository: ContactInfoNumbersRepository,
     private val contactPhotoRepository: ContactPhotoRepository,
-    private val entityManager: EntityManager
+    private val entityManager: EntityManager,
+    @Value("\${app.photoPath}") private val photoPath: String
 ) {
     fun findAll(): List<Contact> {
         return contactRepository.findAll()
@@ -152,6 +155,7 @@ class ContactService(
 
     @Transactional
     fun deleteContact(id: Long): Boolean {
+        deletePhoto(id)
         return contactRepository.deleteContactById(id) > 0
     }
 
@@ -193,7 +197,7 @@ class ContactService(
 
         val url = URL(urlString)
         var fileExtension = FilenameUtils.getExtension(url.path)
-        if (fileExtension == "") fileExtension = "jpeg"
+        if (fileExtension == "") fileExtension = "jpeg" // костыль
 
         val path = getPhotosPath(id, fileExtension)
         val photo = ContactPhoto(id, fileExtension)
@@ -203,7 +207,7 @@ class ContactService(
     }
 
     @Transactional
-    fun deletePhoto(id: Long): Boolean {
+    fun deletePhoto(id: Long) {
         contactRepository.findContactById(id)
             ?: throw ApiNotFoundException("Contact with id $id not found")
         val photo = contactPhotoRepository.findContactPhotoById(id)
@@ -214,16 +218,59 @@ class ContactService(
 
         contactPhotoRepository.deleteContactPhotoById(id)
 
-        return file.delete()
+        if (!file.delete())
+            throw ApiInternalServerErrorException("Photo hasn't been deleted")
     }
 
-    fun loadContactPhoto(id: Long): File {
+    fun loadContactPhoto(id: Long): String {
         contactRepository.findContactById(id)
             ?: throw ApiNotFoundException("Contact with id $id not found")
         val photo = contactPhotoRepository.findContactPhotoById(id)
             ?: throw ApiNotFoundException("The contact's with id $id photo not found")
 
-        return File(getPhotosPath(id, photo.fileExtension))
+        return getPhotosPath(id, photo.fileExtension)
+    }
+
+    fun getReportUpdated(): MutableMap<String, MutableList<Any>> {
+
+        val hql = "from Contact group by region, locality, id, name, description order by region, locality, name"
+        val groupedContacts = entityManager.createQuery(hql).resultList.filterIsInstance<Contact>().toMutableList()
+
+        val regions: MutableSet<String> = HashSet()
+        groupedContacts.forEach { regions.add(it.region) }
+
+        val result: MutableMap<String, MutableList<Any>> = HashMap()
+        regions.forEach { reg ->
+            run {
+                val resultForRegion: MutableList<Any> = ArrayList()
+                val regionsContacts = groupedContacts
+                    .filter { it.region == reg }
+                    .toMutableList()
+
+                val localities: MutableList<String> = ArrayList()
+                regionsContacts
+                    .forEach {
+                        it.locality
+                            ?.let { locality -> localities.add(locality) }
+                    }
+
+                val resultForLocality: MutableMap<String, MutableList<Contact>> = HashMap()
+                localities.forEach { locality ->
+                    resultForLocality.putIfAbsent(locality,
+                        regionsContacts
+                            .filter { it.locality == locality }
+                            .toMutableList()
+                    )
+                }
+                resultForRegion.add(resultForLocality)
+                regionsContacts
+                    .filter { it.locality == null }
+                    .forEach { resultForRegion.add(it) }
+                result.putIfAbsent(reg, resultForRegion)
+            }
+        }
+
+        return result
     }
 
     fun getReport(region: Boolean, locality: Boolean, alphabetically: Boolean): Any {
@@ -232,7 +279,7 @@ class ContactService(
         var hql: String
 
         if (!region && !locality) {
-            hql = "from Contact order by region$desc"
+            hql = "from Contact order by name$desc"
             return session.createQuery(hql).resultList
         }
         if (region) {
@@ -252,7 +299,8 @@ class ContactService(
 
                         for (local in localities) {
                             if (local is String) {
-                                localityMap.putIfAbsent(local,
+                                localityMap.putIfAbsent(
+                                    local,
                                     if (alphabetically) contactRepository.findContactsByLocalityOrderByName(local)
                                     else contactRepository.findContactsByLocalityOrderByNameDesc(local)
                                 )
@@ -272,7 +320,8 @@ class ContactService(
 
                         regionsMap.putIfAbsent(reg, listOfContacts)
                     } else {
-                        regionsMap.putIfAbsent(reg,
+                        regionsMap.putIfAbsent(
+                            reg,
                             if (alphabetically) contactRepository.getContactsByRegionOrderByName(reg)
                             else contactRepository.getContactsByRegionOrderByNameDesc(reg)
                         )
@@ -290,16 +339,18 @@ class ContactService(
         val localities = session.createQuery(hql).resultList
         for (local in localities) {
             if (local is String) {
-                localityMap.putIfAbsent(local,
+                localityMap.putIfAbsent(
+                    local,
                     if (alphabetically) contactRepository.findContactsByLocalityOrderByName(local)
-                    else contactRepository.findContactsByLocalityOrderByNameDesc(local))
+                    else contactRepository.findContactsByLocalityOrderByNameDesc(local)
+                )
             }
         }
 
         return localityMap
     }
 
-    fun getPhotosPath(id: Long, fileExtension: String): String { //TODO(Change to path from config)
-        return "/home/xinik/Postgres/ContactsPhotos/$id.$fileExtension"
+    fun getPhotosPath(id: Long, fileExtension: String): String {
+        return "$photoPath$id.$fileExtension"
     }
 }

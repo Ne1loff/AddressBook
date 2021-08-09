@@ -7,11 +7,14 @@ import com.example.demo.entities.ContactInfoEmail
 import com.example.demo.entities.ContactInfoNumber
 import com.example.demo.exception.ApiBadRequestException
 import com.example.demo.services.ContactService
-import org.springframework.http.HttpHeaders
+import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.Path
 
 
 @RestController
@@ -68,18 +71,21 @@ class ContactController(
         @RequestParam("region", defaultValue = "true") region: Boolean,
         @RequestParam("locality", defaultValue = "true") locality: Boolean,
         @RequestParam("alphabetically", defaultValue = "true") alphabetically: Boolean
-    ) : Any {
-        return contactService.getReport(region, locality, alphabetically)
+    ): Any {
+        return contactService.getReportUpdated()
     }
 
 
     @GetMapping("{id}/photo")
-    fun getContactPhoto(@PathVariable id: Long): ResponseEntity<File> {
-        val file = contactService.loadContactPhoto(id)
-        return ResponseEntity.ok().header(
-            HttpHeaders.CONTENT_DISPOSITION,
-            "attachment; filename=\"" + file.name + "\""
-        ).body(file)
+    fun getContactPhoto(@PathVariable id: Long): ResponseEntity<InputStreamResource> {
+        val filePath = contactService.loadContactPhoto(id)
+        val fileResource = FileSystemResource(filePath)
+
+        return ResponseEntity.ok()
+            .contentLength(fileResource.contentLength())
+            .contentType(
+                MediaType.parseMediaType(Files.probeContentType(Path(filePath))))
+            .body(InputStreamResource(fileResource.inputStream))
     }
 
     @PostMapping("{id}/photo/")
@@ -90,7 +96,8 @@ class ContactController(
 
     @DeleteMapping("{id}/photo/delete")
     fun deleteContactPhoto(@PathVariable id: Long): HttpStatus {
-        return if (contactService.deletePhoto(id)) HttpStatus.OK else HttpStatus.CONFLICT
+        contactService.deletePhoto(id)
+        return HttpStatus.OK
     }
 
     @DeleteMapping("{id}/delete")
