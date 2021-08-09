@@ -96,7 +96,7 @@ class ContactController(
 
     @DeleteMapping("{id}/photo/delete")
     fun deleteContactPhoto(@PathVariable id: Long): HttpStatus {
-        contactService.deletePhoto(id)
+        contactService.deletePhoto(id, fromService = false)
         return HttpStatus.OK
     }
 

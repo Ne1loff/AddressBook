@@ -155,7 +155,8 @@ class ContactService(
 
     @Transactional
     fun deleteContact(id: Long): Boolean {
-        deletePhoto(id)
+        val contact = contactRepository.findContactById(id) ?: throw ApiNotFoundException("Contact not found")
+        if (contact.photo != null) deletePhoto(id, true)
         return contactRepository.deleteContactById(id) > 0
     }
 
@@ -202,14 +203,16 @@ class ContactService(
         val path = getPhotosPath(id, fileExtension)
         val photo = ContactPhoto(id, fileExtension)
 
-        url.openStream().use { `in` -> Files.copy(`in`, Paths.get(path)) }
+        url.openStream().use { `is` -> Files.copy(`is`, Paths.get(path)) }
         contactPhotoRepository.save(photo)
     }
 
     @Transactional
-    fun deletePhoto(id: Long) {
-        contactRepository.findContactById(id)
-            ?: throw ApiNotFoundException("Contact with id $id not found")
+    fun deletePhoto(id: Long, fromService: Boolean) {
+        if (!fromService) {
+            contactRepository.findContactById(id)
+                ?: throw ApiNotFoundException("Contact with id $id not found")
+        }
         val photo = contactPhotoRepository.findContactPhotoById(id)
             ?: throw ApiNotFoundException("The contact's with id $id photo not found")
 

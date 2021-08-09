@@ -24,13 +24,13 @@ data class Contact(
     @JsonInclude(JsonInclude.Include.NON_NULL)
     var locality: String?,
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE], orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE])
     var emails: MutableList<ContactInfoEmail> = ArrayList(),
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE], orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE])
     var numbers: MutableList<ContactInfoNumber> = ArrayList(),
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE], orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE])
     @JoinColumn(name = "id", unique = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     var photo: ContactPhoto?,
