@@ -31,6 +31,7 @@ dependencies {
 	implementation("com.vladmihalcea:hibernate-types-52:2.12.1")
 	implementation("commons-io:commons-io:2.11.0")
     implementation("org.junit.jupiter:junit-jupiter:5.7.0")
+    implementation("javax.validation:validation-api:2.0.1.Final")
 
 
     runtimeOnly("org.postgresql:postgresql")

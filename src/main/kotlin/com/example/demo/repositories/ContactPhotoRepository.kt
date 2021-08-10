@@ -9,5 +9,7 @@ interface ContactPhotoRepository : JpaRepository<ContactPhoto, Long> {
 
     fun findContactPhotoById(id: Long) : ContactPhoto?
 
+    fun existsContactPhotoById(id: Long) : Boolean
+
     fun deleteContactPhotoById(id: Long) : Long
 }

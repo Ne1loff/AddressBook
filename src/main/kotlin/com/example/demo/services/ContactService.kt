@@ -201,7 +201,8 @@ class ContactService(
 
         contactRepository.findContactById(id)
             ?: throw ApiNotFoundException("Contact with id $id not found")
-
+        if (contactPhotoRepository.existsContactPhotoById(id))
+            throw ApiBadRequestException("Photo already exist")
         val url = URL(urlString)
         var fileExtension = FilenameUtils.getExtension(url.path)
         if (fileExtension == "") fileExtension = "jpeg" // костыль
@@ -271,7 +272,7 @@ class ContactService(
                             .toMutableList()
                     )
                 }
-                resultForRegion.add(resultForLocality)
+                if (resultForLocality.isNotEmpty()) resultForRegion.add(resultForLocality)
                 regionsContacts
                     .filter { it.locality == null }
                     .forEach { resultForRegion.add(it) }
